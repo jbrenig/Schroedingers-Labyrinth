@@ -1,0 +1,45 @@
+#pragma kernel DoubleSlitX
+#pragma kernel DoubleSlitY
+
+Texture2D<float1> Input;
+RWTexture2D<float1> Result;
+
+uint2 pos;
+uint2 size;
+
+float height;
+uint slit_width;
+uint slit_distance;
+
+bool use_max;
+
+// TODO: center around position and handle out of bounds indices
+[numthreads(8,8,1)]
+void DoubleSlitY (uint3 id : SV_DispatchThreadID)
+{
+    const uint2 end = pos + size;
+    const uint centerY = pos.y + size.y / 2;
+    const uint slitHalfWidth = slit_width / 2;
+    const uint slitStart1 = centerY - slit_distance - slitHalfWidth;
+    const uint slitEnd1 = slitStart1 + slit_width;
+    const uint slitStart2 = centerY + slit_distance - slitHalfWidth;
+    const uint slitEnd2 = slitStart2 + slit_width;
+    const bool insideWall = id.x >= pos.x && id.y >= pos.y && id.x <= end.x && id.y <= end.y;
+    const bool insideSlits = (id.y >= slitStart1 && id.y <= slitEnd1) || (id.y >= slitStart2 && id.y <= slitEnd2);
+    Result[id.xy] = insideWall && !insideSlits ? (use_max ? max(height, Input[id.xy]) : min(height, Input[id.xy])) : (!use_max && insideWall && insideSlits ? 0 : Input[id.xy]);
+}
+
+[numthreads(8,8,1)]
+void DoubleSlitX (uint3 id : SV_DispatchThreadID)
+{
+    const uint2 end = pos + size;
+    const uint centerX = pos.x + size.x / 2;
+    const uint slitHalfWidth = slit_width / 2;
+    const uint slitStart1 = centerX - slit_distance - slitHalfWidth;
+    const uint slitEnd1 = slitStart1 + slit_width;
+    const uint slitStart2 = centerX + slit_distance - slitHalfWidth;
+    const uint slitEnd2 = slitStart2 + slit_width;
+    const bool insideWall = id.x >= pos.x && id.y >= pos.y && id.x <= end.x && id.y <= end.y;
+    const bool insideSlits = (id.x >= slitStart1 && id.x <= slitEnd1) || (id.x >= slitStart2 && id.x <= slitEnd2);
+    Result[id.xy] = insideWall && !insideSlits ? (use_max ? max(height, Input[id.xy]) : min(height, Input[id.xy])) : (!use_max && insideWall && insideSlits ? 0 : Input[id.xy]);
+}

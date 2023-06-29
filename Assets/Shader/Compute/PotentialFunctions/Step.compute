@@ -1,0 +1,34 @@
+#pragma kernel StepX
+#pragma kernel StepY
+#pragma kernel StepXMax
+#pragma kernel StepYMax
+
+RWTexture2D<float1> Merge;
+RWTexture2D<float1> Result;
+
+uint location;
+bool inverted;
+
+[numthreads(8,8,1)]
+void StepXMax (uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = max(Merge[id.xy], id.x < location ? inverted : 1 - inverted);
+}
+
+[numthreads(8,8,1)]
+void StepX (uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = id.x < location ? inverted : 1 - inverted;
+}
+
+[numthreads(8,8,1)]
+void StepYMax (uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = max(Merge[id.xy], id.y < location ? inverted : 1 - inverted);
+}
+
+[numthreads(8,8,1)]
+void StepY (uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = id.y < location ? inverted : 1 - inverted;
+}

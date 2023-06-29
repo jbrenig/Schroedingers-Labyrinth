@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 2c8c4cc2bb013604bb5f2238e2bd512b
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - fftShader: {fileID: 7200000, guid: e256aa5025922224a80de1e53a2d05b0, type: 3}
+  - quantumShader: {fileID: 7200000, guid: e6af1c1a7104b95419cd5d70d8b0f4d9, type: 3}
+  - convertShader: {fileID: 7200000, guid: a2d9f2774bce4f24db9ed256fb91ceeb, type: 3}
+  - maxMagnitudeShader: {fileID: 7200000, guid: 3f9dc813ff0d4059a26df8f5a587d020,
+      type: 3}
+  - parallelSumShader: {fileID: 7200000, guid: 78dd8cba93a143a895664960cc764087, type: 3}
+  - waveFunctionShader: {fileID: 7200000, guid: 86a05609e3648fd42a6cdb4ce6afc741,
+      type: 3}
+  - rescaleShader: {fileID: 7200000, guid: a19d9359dacdac4498b5837736c1b317, type: 3}
+  - blendShader: {fileID: 7200000, guid: 7a26d848ea3c441e86489c7c70f8864b, type: 3}
+  - material: {fileID: 2100000, guid: a2c706865b62c26419bc8108b67f6be0, type: 2}
+  executionOrder: -500
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

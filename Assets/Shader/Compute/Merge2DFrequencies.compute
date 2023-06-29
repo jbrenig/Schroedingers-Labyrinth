@@ -1,0 +1,101 @@
+#pragma kernel WeightedAverages
+
+Texture2D<float2> Input;
+RWStructuredBuffer<float> ResultIndices;
+RWStructuredBuffer<float> ResultValues;
+
+int phaseSamples;
+
+int radius;
+
+uint2 Size;
+uint2 HalfSize;
+
+static const float TWO_PI = 6.28318530718;
+
+inline float2 GetWaveNumber(uint x, uint y)
+{
+    float kx = (float) x;
+    float ky = (float) y;
+    if (kx >= HalfSize.x)
+    {
+        kx -= Size.x;
+    }
+                
+    if (ky >= HalfSize.y)
+    {
+        ky -= Size.y;
+    }
+    return float2(kx, ky);
+}
+
+inline float2 GetWaveIndexNormalized(float x, float y)
+{
+    float kx = (float) x;
+    float ky = (float) y;
+    if (kx < 0)
+    {
+        kx += Size.x;
+    }
+                
+    if (ky < 0)
+    {
+        ky += Size.y;
+    }
+    return float2(kx, ky);
+}
+
+[numthreads(64,1,1)]
+void WeightedAverages (uint3 id : SV_DispatchThreadID)
+{
+    // init return values
+    ResultIndices[id.x] = 0;
+    ResultValues[id.x] = 0;
+
+    // go through the current column
+    for (uint y = 0; y < Size.y; y++)
+    {
+        const float2 k = GetWaveNumber(id.x, y);
+        const float2 current = Input[uint2(id.x, y)];
+        const float magnitudeSq = current.x * current.x + current.y * current.y;
+        ResultValues[id.x] += magnitudeSq;
+
+        const float kSq = k.x * k.x + k.y * k.y;
+        // const float kMagnitude = kSq <= 0 ? 0 : sqrt(kSq);
+
+        // add to indices weighted by magnitude
+        ResultIndices[id.x] += kSq * magnitudeSq;
+    }
+
+    // normalize indices weights
+    ResultIndices[id.x] /= ResultValues[id.x];
+}
+
+// [numthreads(64,1,1)]
+// void CSMain (uint3 id : SV_DispatchThreadID)
+// {
+//     Result[id.x] = 0;
+//     for (uint i = 0; i < radius; i++)
+//     {
+//         const float2 current = Input[uint2(id.x, i)];
+//         Result[id.x] += current.x; // * current.x + current.y * current.y;
+//     }
+//     
+//     Result[id.x] /= radius;
+// }
+
+// [numthreads(64,1,1)]
+// void CSMain (uint3 id : SV_DispatchThreadID)
+// {
+//     Result[id.x] = 0;
+//     for (int i = 0; i < phaseSamples; i++)
+//     {
+//         const float x = cos(i * TWO_PI / (float) phaseSamples) * (float) id.x;
+//         const float y = sin(i * TWO_PI / (float) phaseSamples) * (float) id.x;
+//         const float2 converted = GetWaveIndexNormalized(x, y);
+//         const float2 current = Input[uint2((uint) converted.x, (uint) converted.y)];
+//         Result[id.x] += current.x * current.x + current.y * current.y;
+//     }
+//     
+//     Result[id.x] /= phaseSamples;
+// }

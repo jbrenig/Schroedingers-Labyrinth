@@ -1,0 +1,68 @@
+///
+/// Shader to calculate the squared sum in a masked texture with complex numbers in parallel. Based on the prefix-sum shader found at https://github.com/walbourn/directx-sdk-samples
+/// 
+#pragma kernel ScanPerGroupMasked
+#pragma kernel ScanPerGroup
+#pragma kernel ScanBuckets
+
+#define THREADS_PER_GROUP 128 // Ensure that this equals the 'threadsPerGroup' const in the host script.
+
+Texture2D<float2> InputTexture;
+Texture2D<float1> MaskTexture;
+StructuredBuffer<float> InputBuffer;
+RWStructuredBuffer<float> Result;
+
+uint TextureWidth;
+
+groupshared float bucket[THREADS_PER_GROUP];
+
+
+void Scan(uint3 DTid, uint GI, float x)
+{
+    bucket[GI] = x;
+
+    // Up sweep  
+    [unroll]
+    for (uint stride = 2; stride <= THREADS_PER_GROUP; stride <<= 1)
+    {
+        GroupMemoryBarrierWithGroupSync();
+        if ((GI & (stride - 1)) == (stride - 1))
+        {
+            bucket[GI] = bucket[GI] + bucket[GI - stride / 2];
+        }
+    }
+    
+    Result[DTid.x] = bucket[GI];
+}
+
+// Scan in each bucket that is masked.
+[numthreads( THREADS_PER_GROUP, 1, 1 )]
+void ScanPerGroupMasked(uint3 DTid : SV_DispatchThreadID, uint3 GTid : SV_GroupThreadID, uint GI: SV_GroupIndex) // CSScanInBucket
+{
+    uint2 texCoord = uint2(DTid.x % TextureWidth, DTid.x / TextureWidth);
+    float2 val = InputTexture[texCoord];
+   
+    float x = val.x * val.x + val.y * val.y;
+    
+    Scan(DTid, GI, MaskTexture[texCoord] * x);
+}
+
+// Scan in each bucket.
+[numthreads( THREADS_PER_GROUP, 1, 1 )]
+void ScanPerGroup(uint3 DTid : SV_DispatchThreadID, uint3 GTid : SV_GroupThreadID, uint GI: SV_GroupIndex) // CSScanInBucket
+{
+    float2 val = InputTexture[uint2(DTid.x % TextureWidth, DTid.x / TextureWidth)];
+   
+    float x = val.x * val.x + val.y * val.y;
+    Scan(DTid, GI, x);
+}
+
+
+// Scan in each bucket.
+[numthreads( THREADS_PER_GROUP, 1, 1 )]
+void ScanBuckets(uint3 DTid : SV_DispatchThreadID, uint3 GTid : SV_GroupThreadID, uint GI: SV_GroupIndex) // CSScanInBucket
+{
+    // TODO: allow early cancellation if not all buckets are relevant
+    float x = InputBuffer[DTid.x * THREADS_PER_GROUP - 1];
+    Scan(DTid, GI, x);
+}

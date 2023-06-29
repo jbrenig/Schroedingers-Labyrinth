@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 36d908bc98ad69545b37880e339af237
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - cameraToRotate: {instanceID: 0}
+  - audioSource: {instanceID: 0}
+  - audioTurnFull: {fileID: 8300000, guid: 7a241114bb6217045a19396c61cbbd95, type: 3}
+  - audioTurnHalf: {fileID: 8300000, guid: a2b410d229035b843aec87d2bf200872, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

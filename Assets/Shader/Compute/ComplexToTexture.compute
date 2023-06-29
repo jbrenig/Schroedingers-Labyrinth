@@ -1,0 +1,58 @@
+﻿#pragma kernel ConvertComplex
+
+#define NTHREADS 8
+
+Texture2D<float2> Data;
+RWTexture2D<float4> Result;
+
+float Saturation;
+float MaxSq;
+uint GridSize;
+uint2 offset;
+
+bool DrawGrid;
+float4 GridColor;
+
+static const float PI = 3.14159265359;
+static const float TWO_PI = 6.28318530718;
+
+float3 HsvToRgb(float3 HSV)
+{
+    float3 RGB = HSV.z;
+       
+    float var_h = HSV.x * 6;
+    uint var_i = (uint) var_h;   // Or ... var_i = floor( var_h )
+    float f = var_h - var_i;
+    float v = HSV.z;
+    float p = HSV.z * (1.0 - HSV.y);
+    float q = HSV.z * (1.0 - HSV.y * f);
+    float t = HSV.z * (1.0 - HSV.y * (1 - f));
+    if      (var_i == 0) { RGB = float3(v, t, p); }
+    else if (var_i == 1) { RGB = float3(q, v, p); }
+    else if (var_i == 2) { RGB = float3(p, v, t); }
+    else if (var_i == 3) { RGB = float3(p, q, v); }
+    else if (var_i == 4) { RGB = float3(t, p, v); }
+    else                 { RGB = float3(v, p, q); }
+       
+    return (RGB);
+}
+
+[numthreads(NTHREADS,NTHREADS,1)]
+void ConvertComplex (uint3 id : SV_DispatchThreadID)
+{
+    float2 val = Data[id.xy + offset];
+    float magSq = (val.x * val.x + val.y * val.y) / MaxSq;
+    
+    float phase = val.x + val.y == 0 ? 0 : (atan2(val.y, val.x) + PI) / TWO_PI;
+    
+    float3 rgb = HsvToRgb(float3(phase, Saturation, magSq));
+
+    uint modX = id.x % GridSize; 
+    uint modY = id.y % GridSize;
+    uint modXY = DrawGrid ? min(min(modX, modY), 1) : 1; // 0 if on grid, 1 if off grid
+    float gridStrength = (1 - modXY); // invert to get grid 
+    float adjustedGridStrength = gridStrength * (1 - magSq); // adjusted for wavefunction brightness
+    float4 gridCol = adjustedGridStrength * GridColor;
+    float3 waveCol = modXY * rgb;
+    Result[id.xy] = gridCol + float4(waveCol.r, waveCol.g, waveCol.b, 0);
+}

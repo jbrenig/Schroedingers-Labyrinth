@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 01099b7e481a91d4cbc8f63a2189b3bc
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - simulator: {instanceID: 0}
+  - rescaleShader: {fileID: 7200000, guid: a19d9359dacdac4498b5837736c1b317, type: 3}
+  - gaussFilterMaterial: {fileID: 2100000, guid: 0784109b7a3e61b45b01af84cb45cdc5,
+      type: 2}
+  executionOrder: -300
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

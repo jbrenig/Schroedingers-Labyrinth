@@ -1,0 +1,20 @@
+#pragma kernel CSMain
+
+RWTexture2D<float1> Result;
+
+float2 mean;
+float2 size;
+
+float amplitude;
+float power;
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float2 scaled = (id.xy - mean) / size;
+    float dist = sqrt(scaled.x * scaled.x + scaled.y * scaled.y);
+
+    // dist is always positive (as long amplitude is positive, which it should be.)
+    #pragma warning(disable : 3571)
+    Result[id.xy] = dist > 1 ? amplitude : amplitude * pow(dist, power);
+}

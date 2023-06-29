@@ -1,0 +1,69 @@
+#pragma kernel Block
+#pragma kernel Triangle1
+#pragma kernel Triangle2
+#pragma kernel Triangle1Inv
+#pragma kernel Triangle2Inv
+
+Texture2D<float1> Input;
+RWTexture2D<float1> Result;
+
+uint2 start;
+uint2 end;
+bool use_max;
+
+float height;
+
+[numthreads(8,8,1)]
+void Block (uint3 id : SV_DispatchThreadID)
+{
+    const bool inside = id.x >= start.x && id.y >= start.y && id.x <= end.x && id.y <= end.y; 
+    Result[id.xy] = inside ? (use_max ? max(height, Input[id.xy]) : min(height, Input[id.xy])) : Input[id.xy];
+}
+
+inline void Triangle (uint3 id : SV_DispatchThreadID, float a, float b)
+{
+    const float xAdj = id.x - start.x;
+    const uint resultInd = (uint) (a * xAdj + b);
+    const bool inside = id.x >= start.x && id.y >= start.y && id.x <= end.x && id.y <= resultInd; 
+    Result[id.xy] = inside ? (use_max ? max(height, Input[id.xy]) : min(height, Input[id.xy])) : Input[id.xy];    
+}
+
+[numthreads(8,8,1)]
+void Triangle1 (uint3 id : SV_DispatchThreadID)
+{
+    const float a = (end.y - start.y) / (float) (end.x - start.x);
+    const float b = start.y;
+    Triangle(id, a, b);
+}
+
+[numthreads(8,8,1)]
+void Triangle2 (uint3 id : SV_DispatchThreadID)
+{
+    const float a = (end.y - start.y) / (float) (end.x - start.x);
+    const float b = end.y;
+    Triangle(id, -a, b);
+}
+
+inline void TriangleInv (uint3 id : SV_DispatchThreadID, float a, float b)
+{
+    const float xAdj = id.x - start.x;
+    const uint resultInd = (uint) (a * xAdj + b);
+    const bool inside = id.x >= start.x && id.y >= resultInd && id.x <= end.x && id.y <= end.y; 
+    Result[id.xy] = inside ? (use_max ? max(height, Input[id.xy]) : min(height, Input[id.xy])) : Input[id.xy];    
+}
+
+[numthreads(8,8,1)]
+void Triangle1Inv (uint3 id : SV_DispatchThreadID)
+{
+    const float a = (end.y - start.y) / (float) (end.x - start.x);
+    const float b = start.y;
+    TriangleInv(id, a, b);
+}
+
+[numthreads(8,8,1)]
+void Triangle2Inv (uint3 id : SV_DispatchThreadID)
+{
+    const float a = (end.y - start.y) / (float) (end.x - start.x);
+    const float b = end.y;
+    TriangleInv(id, -a, b);
+}

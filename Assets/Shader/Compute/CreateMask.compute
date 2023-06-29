@@ -1,0 +1,19 @@
+#pragma kernel CreateMask
+
+#define NTHREADS 8
+
+RWTexture2D<float1> Result;
+
+uint startX;
+uint startY;
+
+uint endX;
+uint endY;
+
+
+[numthreads(NTHREADS,NTHREADS,1)]
+void CreateMask (uint3 id : SV_DispatchThreadID)
+{
+    const bool isInside = (id.x >= startX) && (id.x <= endX) && (id.y >= startY) && (id.y <= endY);
+    Result[id.xy] = isInside ? 1 : 0;
+}

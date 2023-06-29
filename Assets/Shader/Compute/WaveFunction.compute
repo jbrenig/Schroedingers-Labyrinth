@@ -1,0 +1,73 @@
+#pragma kernel WavePacket
+#pragma kernel Gaussian
+#pragma kernel PlaneWave
+
+#define NTHREADS 8
+
+static const float TWO_PI = 6.28318530718;
+static const float2 I = float2(0, 1);
+
+RWTexture2D<float2> Result;
+
+float varX;
+float varY;
+
+float kx;
+float ky;
+
+float meanX;
+float meanY;
+
+
+inline float2 Mul(float2 a, float2 b)
+{
+    return float2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+}
+
+inline float2 MulI(float2 a)
+{
+    return float2(-a.y, a.x);
+}
+
+inline float2 Exp(float2 a)
+{
+    float temp = exp(a.x);
+    return float2(temp * cos(fmod(a.y, TWO_PI)), temp * sin(fmod(a.y, TWO_PI)));
+}
+
+inline float2 ExpI(float a)
+{
+    float modA = fmod(a, TWO_PI);
+    return float2(cos(modA), sin(modA));
+}
+
+inline float2 PlaneWave(float2 pos)
+{
+    return ExpI(pos.x * kx + pos.y * ky);
+}
+
+inline float2 GaussianImpl(float2 pos)
+{
+    float p1 = pow(pos.x - meanX, 2) / (2 * varX);
+    float p2 = pow(pos.y - meanY, 2) / (2 * varY);
+    float real = exp(- (p1 + p2));
+    return float2(real, 0);
+}
+
+[numthreads(NTHREADS,NTHREADS,1)]
+void WavePacket (uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = Mul(GaussianImpl(id.xy), PlaneWave(id.xy));
+}
+
+[numthreads(NTHREADS,NTHREADS,1)]
+void Gaussian (uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = GaussianImpl(id.xy);
+}
+
+[numthreads(NTHREADS,NTHREADS,1)]
+void PlaneWave (uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = PlaneWave(id.xy);
+}

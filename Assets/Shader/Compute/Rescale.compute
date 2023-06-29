@@ -1,0 +1,36 @@
+#pragma kernel Rescale
+#pragma kernel Mask
+#pragma kernel MaskInverted
+
+#define NTHREADS 8
+
+
+Texture2D<float1> MaskInput;
+RWTexture2D<float2> Input;
+RWTexture2D<float2> Result;
+
+float scale;
+
+
+inline float2 MulR(float2 a, float real)
+{
+    return float2(a.x * real, a.y * real);
+}
+
+[numthreads(NTHREADS,NTHREADS,1)]
+void Rescale (uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = MulR(Input[id.xy],  scale);
+}
+
+[numthreads(NTHREADS,NTHREADS,1)]
+void Mask (uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = MulR(Input[id.xy], MaskInput[id.xy]);
+}
+
+[numthreads(NTHREADS,NTHREADS,1)]
+void MaskInverted (uint3 id : SV_DispatchThreadID)
+{
+    Result[id.xy] = MulR(Input[id.xy], 1 - MaskInput[id.xy]);
+}

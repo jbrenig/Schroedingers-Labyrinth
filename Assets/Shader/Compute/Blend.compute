@@ -1,0 +1,40 @@
+#pragma kernel BlendMax
+#pragma kernel BlendMin
+
+/** Base input */
+Texture2D<float1> Input1;
+
+/** Offset input */
+Texture2D<float1> Input2;
+RWTexture2D<float1> Result;
+
+int2 offset;
+uint2 input2_size;
+
+bool flip_x;
+bool flip_y;
+
+float multiplier;
+
+
+inline uint2 get_index(const uint3 id)
+{
+    const int2 offset_index = id.xy + offset;
+    const uint x = clamp(offset_index.x, 0, input2_size.x);
+    const uint y = clamp(offset_index.y, 0, input2_size.y);
+    return uint2(flip_x ? input2_size.x - x : x, flip_y ? input2_size.y - y : y);
+}
+
+[numthreads(8,8,1)]
+void BlendMax (uint3 id : SV_DispatchThreadID)
+{
+    const uint2 clampedIndex = get_index(id);
+    Result[id.xy] = max(Input1[id.xy], Input2[clampedIndex] * multiplier);
+}
+
+[numthreads(8,8,1)]
+void BlendMin (uint3 id : SV_DispatchThreadID)
+{
+    const uint2 clampedIndex = get_index(id);
+    Result[id.xy] = min(Input1[id.xy], Input2[clampedIndex] * multiplier);
+}
