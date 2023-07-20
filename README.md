@@ -14,7 +14,7 @@
 > can directly influence the simulation and can immediately observe
 > how the wave function reacts to their inputs.
 
-![Screenshot](./Screenshots/white/scr_white_04.png)
+![Screenshot](./Screenshots/level1.png)
 
 You can watch the Youtube Demo here: https://www.youtube.com/watch?v=U7A9l2PEmK
 
